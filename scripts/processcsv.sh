@@ -24,4 +24,6 @@ for filename in ../data_raw/*.csv; do
                 { printf("\n%s\n",$0); } } \
                     /^!/ { printf("%s",$0) }' | \
     tail -n +2 > ../data_processed/$(basename $filename)
+    # need final \r\n to process in matlab textscan
+    echo >> ../data_processed/$(basename $filename)
 done
