@@ -9,7 +9,7 @@
 for filename in ../data_raw/*.csv; do
     echo -n "Processing "
     echo $(basename $filename)
-    echo "time,x,z,y,jx,jy,wx,wy,wz,event" > ../data_processed/$(basename $filename)
+#    echo "time,x,z,y,jx,jy,wx,wy,wz,event" > ../data_processed/$(basename $filename)
     tail -n +3 $filename | \
     sed 's/[()]//g' | \
     sed 's/, /,/g' | \
@@ -23,5 +23,5 @@ for filename in ../data_raw/*.csv; do
             else \
                 { printf("\n%s\n",$0); } } \
                     /^!/ { printf("%s",$0) }' | \
-    tail -n +2 >> ../data_processed/$(basename $filename)
+    tail -n +2 > ../data_processed/$(basename $filename)
 done
