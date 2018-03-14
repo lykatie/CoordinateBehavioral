@@ -1,8 +1,12 @@
-function [ position, controlVel, controlPol, error, rotation, runnum ] = behavior( behaviorcells, pickuplocs )
+function [ position, controlVel, controlPol, error, rotation, runnum ] = behavior( behaviorcells, pickuplocs, butndata, butnfs )
 %BEHAVIOR Summary of this function goes here
 %   Detailed explanation goes here
 %COMPUTE_BUTNALIGN Summary of this function goes here
 %   Detailed explanation goes here
+
+    if(~exist('butndata', 'var'))
+        butndata = [];
+    end
     col.time = 1;
     col.pos = [2 4];
     col.vel = [5 6];
@@ -59,6 +63,22 @@ function [ position, controlVel, controlPol, error, rotation, runnum ] = behavio
                 acos(dot(targetcoord-position(i, :), controlVel(i, :)) / ...
                 (norm(targetcoord-position(i, :)) * norm(controlVel(i, :))));
         end
+    end
+    
+    if(~isempty(butndata))
+        [~, butnlocs] = findpeaks(abs(butndata), 'MinPeakProminence', 0.5, 'MinPeakDistance', butnfs*0.036);
+        unitylocs = unity_struct.clock(find(unity_struct.events(:, 1)));
+        usenum = min(length(butnlocs), length(unitylocs(2:end)));
+        offset = mean(butnlocs(end-usenum+1:end)/butnfs - unitylocs(end-usenum+1:end) + 0.0539);
+        
+        unity_correct_clock = unity_struct.clock + offset;
+        tdt_clock = (0:length(butndata)-1)'/butnfs;
+        
+        position = interp1(unity_correct_clock, position, tdt_clock, 'linear', 'extrap');
+        controlVel = interp1(unity_correct_clock, controlVel, tdt_clock, 'linear', 'extrap');
+        controlPol = interp1(unity_correct_clock, controlPol, tdt_clock, 'linear', 'extrap');
+        error.angle = interp1(unity_correct_clock, error.angle, tdt_clock, 'linear', 'extrap');
+        rotation = interp1(unity_correct_clock, rotation, tdt_clock, 'nearest', 'extrap');
     end
     
 end
