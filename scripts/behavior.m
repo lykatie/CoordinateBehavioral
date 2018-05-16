@@ -1,34 +1,40 @@
-function [ position, controlVel, controlPol, error, rotation, runnum ] = behavior( behaviorcells, pickuplocs, butndata, butnfs )
+function [ position, controlVel, controlPol, error, rotation, runnum, tdt_clock ] ...
+                  = behavior( behaviorcells, pickuplocs, butndata, butnfs )
 %BEHAVIOR Summary of this function goes here
-%   Detailed explanation goes here
+%   Gets user's playing behavior for all runs 
 %COMPUTE_BUTNALIGN Summary of this function goes here
-%   Detailed explanation goes here
+%   ??
 
     if(~exist('butndata', 'var'))
         butndata = [];
     end
     col.time = 1;
-    col.pos = [2 4];
-    col.vel = [5 6];
-    col.button = 10;
-    col.pickup = 11;
+    col.pos = [2 4];    %Avatar position
+    col.vel = [5 6];    %Mouse/trackpad/control velocity
+    col.button = 10;    %key that performs maze rotation
+    col.pickup = 11;    %
 
-    unity_struct = unitycsvextract(behaviorcells, col);
+    unity_struct = unitycsvextract(behaviorcells, col); %Gets pre-synced unity events
     position = cell2mat(behaviorcells(:, col.pos));
     controlVel = cell2mat(behaviorcells(:, col.vel));
 
+    %Get button events
     rotationraw = unity_struct.events(:, 1);
     
+    %Identifies run's orientation
     rotation = rotationraw;
     rotation(rotation >= 2000 | rotation < 1000) = 0;
     rotation = rotation - 1000;
     rotation(1) = 0;
     
+    %total runs
     runnum = zeros(size(rotationraw));
     runnum(1) = 1;
     
+    %Target IDs
     target = ones(size(unity_struct.events(:, 2)));
 
+    %Set target IDs by current maze orientation/pickup events
     for i = 2:length(rotationraw)
         if(rotation(i) == -1000)
             rotation(i) = rotation(i-1);
@@ -50,6 +56,7 @@ function [ position, controlVel, controlPol, error, rotation, runnum ] = behavio
             
     end
 
+    %convert velocity cartesian into polar coordinates (theta, r)
     controlPol = nan(size(controlVel));
     [controlPol(:, 1), controlPol(:, 2)] = ...
         cart2pol(controlVel(:, 1), controlVel(:, 2));
@@ -70,9 +77,10 @@ function [ position, controlVel, controlPol, error, rotation, runnum ] = behavio
         unitylocs = unity_struct.clock(find(unity_struct.events(:, 1)));
         usenum = min(length(butnlocs), length(unitylocs(2:end)));
         offset = mean(butnlocs(end-usenum+1:end)/butnfs - unitylocs(end-usenum+1:end) + 0.0539);
+        %0.0539 = button and audio delay
         
         unity_correct_clock = unity_struct.clock + offset;
-        tdt_clock = (0:length(butndata)-1)'/butnfs;
+        tdt_clock = (0:length(butndata)-1)'/butnfs; %time for each display update
         
         position = interp1(unity_correct_clock, position, tdt_clock, 'linear', 'extrap');
         controlVel = interp1(unity_correct_clock, controlVel, tdt_clock, 'linear', 'extrap');
@@ -80,6 +88,7 @@ function [ position, controlVel, controlPol, error, rotation, runnum ] = behavio
         error.angle = interp1(unity_correct_clock, error.angle, tdt_clock, 'linear', 'extrap');
         rotation = interp1(unity_correct_clock, rotation, tdt_clock, 'nearest', 'extrap');
     end
+    
     
 end
 
