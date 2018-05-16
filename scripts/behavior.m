@@ -61,6 +61,20 @@ function [ position, controlVel, controlPol, error, rotation, runnum, tdt_clock 
     [controlPol(:, 1), controlPol(:, 2)] = ...
         cart2pol(controlVel(:, 1), controlVel(:, 2));
     
+    %resets targetID by mouse and target proximity
+    tlocs = repmat(pickuplocs, 1, 1, length(position));
+    tlocs = permute(tlocs, [3 2 1]);
+    distcoord = abs(tlocs - repmat(position, 1, 1, 12));
+    dist = sqrt(squeeze(sum(distcoord.^2,2)));
+    [min_val, indx] = min(dist,[],2);
+    for i =1:length(indx) -1
+        diff = abs(indx(i+1) - indx(i)); 
+        if( diff == 4 || diff == 5)
+            indx(i+1) = indx(i);
+        end
+    end
+    
+       %Calculates angle error wrt target pickup
     error = struct();
     error.angle = zeros(size(rotationraw));
     for i = 1:length(rotationraw)
@@ -70,8 +84,23 @@ function [ position, controlVel, controlPol, error, rotation, runnum, tdt_clock 
                 acos(dot(targetcoord-position(i, :), controlVel(i, :)) / ...
                 (norm(targetcoord-position(i, :)) * norm(controlVel(i, :))));
         end
+    end 
+        %Calculates angle error wrt target pickup (by closest target)
+%     error = struct();
+    error.angle2 = zeros(size(rotationraw));
+    for i = 1:length(rotationraw)
+        if(controlPol(i, 2) > 0 && indx(i) > 0)
+            targetcoord = pickuplocs(indx(i), :);
+            error.angle2(i) = ...
+                acos(dot(targetcoord-position(i, :), controlVel(i, :)) / ...
+                (norm(targetcoord-position(i, :)) * norm(controlVel(i, :))));
+        end
     end
     
+
+    
+    %??
+    tdt_clock = zeros(length(butndata)-1);
     if(~isempty(butndata))
         [~, butnlocs] = findpeaks(abs(butndata), 'MinPeakProminence', 0.5, 'MinPeakDistance', butnfs*0.036);
         unitylocs = unity_struct.clock(find(unity_struct.events(:, 1)));

@@ -3,10 +3,11 @@ function [improvement, improvementnorm, runerror, meanerror, sderror] = summarye
 %Low ___error = high performance
 
     runlist = unique(runnum);
-    runerror = nan(numel(runlist), 2);
+    runerror = nan(numel(runlist), 3); 
     for i = 1:numel(runlist)
         runerror(i, 1) = sum(abs(error.angle(runnum == runlist(i))));
-        runerror(i, 2) = mode(rotation(runnum == runlist(i)));
+        runerror(i, 2) = sum(abs(error.angle2(runnum == runlist(i))));
+        runerror(i, 3) = mode(rotation(runnum == runlist(i)));
     end
     
     rotlist = [0 45 90 180];

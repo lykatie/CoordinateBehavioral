@@ -40,3 +40,55 @@ for i = 1:numel(filelist)
 end
 % clearvars filename fileID dataArray ans;
 % save('T113318behav', 'T113318behav');
+
+%%
+%Store total runerror sum 
+orientation = [0 45 90 180];
+for i = 1:numel(filelist)
+    total = zeros(length(orientation), 3); %4x3 matrix
+    for j =1:numel(orientation)
+        mask = logical(zeros(length(errorresult(i).runerror),1));
+        mask = errorresult(i).runerror(:,3) == orientation(j);
+        total(j, 1) = sum(errorresult(i).runerror(mask,1));
+        total(j, 2) = sum(errorresult(i).runerror(mask,2));
+        total(:,3) = orientation;
+    end
+    errorresult(i).runerror_total = total;
+end
+
+
+
+%stores all errorangle sums for each orientation and each file
+% [25(files), 2(error angles), 4(orientations)]
+file_sum = zeros(numel(filelist),2,length(orientation)); 
+for i=1:size(file_sum,1)
+    for j=1:size(file_sum, 2)
+        for k=1:size(file_sum,3)
+            file_sum(i,j,k) = errorresult(i).runerror_total(k,j);
+        end
+    end
+end
+
+%mean/stdev of all files by orientation
+errmean = zeros(length(orientation), 3);
+errstdev = zeros(size(errmean));
+for i=1:size(errmean,1)
+    for j=1:size(errmean,2)-1
+        errmean(i,j) = mean(file_sum(:,j,i));
+        errstdev(i,j) = std(file_sum(:,j,i));
+    end
+end
+
+%plot
+figure;
+errorbar(orientation, errmean(:,1), errstdev(:,1), 'o-')
+hold on
+errorbar(orientation, errmean(:,2), errstdev(:,2), 'ro-')
+
+    
+
+
+
+
+
+
