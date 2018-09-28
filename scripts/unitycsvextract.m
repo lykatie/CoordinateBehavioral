@@ -1,10 +1,13 @@
+%Gets Unity events and sync event start times
 function [unity_struct] = unitycsvextract( behaviorcells, col )
 
+    %Unity Events of Interest
     % define columns with stuff in it
-    col_time = col.time;
-    col_button = col.button;
+    col_time = col.time;        %Game start time
+    col_button = col.button;    
     col_pickup = col.pickup;
 
+    %Sync game start time 
     unity_struct = struct();
     % correct clock 40-second skips
     unity_rawclock = cell2mat(behaviorcells(:, col_time)); % read from column 1
